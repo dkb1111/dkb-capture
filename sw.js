@@ -1,4 +1,4 @@
-const CACHE='dkb-capture-v021';
+const CACHE='dkb-capture-v03';
 const ASSETS=['./','index.html','app.js','manifest.webmanifest','icon-192.png','icon-512.png'];
 self.addEventListener('install',e=>{
   self.skipWaiting();
