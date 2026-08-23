@@ -1,11 +1,83 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#111111"><link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icon-192.png"><title>DKB Capture</title><style>
-body{font-family:Arial;margin:0;padding:18px;background:#f4f4f4;color:#111;max-width:760px;margin-inline:auto}h1{font-size:32px;margin:0 0 4px}.sub{margin-bottom:16px;color:#444}#recordBtn{width:100%;min-height:160px;border:0;border-radius:24px;background:#111;color:#fff;font-size:34px;font-weight:800}#recordBtn.on{background:#d71920}.card{background:#fff;border-radius:18px;padding:16px;margin-top:14px}.meter{height:30px;background:#ddd;border-radius:16px;overflow:hidden;margin:10px 0}#meterFill{height:100%;width:0;background:#222}#quality{font-size:30px;font-weight:800}textarea{width:100%;min-height:100px;border:1px solid #bbb;border-radius:14px;padding:12px;font-size:18px;margin-top:14px;box-sizing:border-box}.row{display:flex;gap:10px;margin-top:12px}button.small{flex:1;min-height:58px;border:0;border-radius:14px;font-size:20px;font-weight:800}.hidden{display:none}.pill{display:inline-block;padding:7px 11px;border-radius:999px;background:#eee;font-weight:700;margin-top:8px}audio{width:100%;margin-top:10px}input[type=url]{width:100%;padding:12px;border:1px solid #bbb;border-radius:12px;font-size:15px;box-sizing:border-box}
-</style></head><body>
-<h1>DKB Capture</h1><div class="sub">Tap once to record. Tap again to stop and save automatically.</div>
-<button id="recordBtn">● RECORD</button>
-<div class="card"><div><b>Timer:</b> <span id="timer">00:00</span></div><div class="meter"><div id="meterFill"></div></div><div>Voice quality</div><div id="quality">READY</div><div id="qualityNote">Tap Record and speak normally.</div><div id="status" class="pill">READY</div></div>
-<textarea id="note" placeholder="Optional note or correction"></textarea>
-<div id="afterCard" class="card hidden"><b>Latest capture</b><audio id="player" controls></audio><div class="row"><button id="replayBtn" class="small">▶ REPLAY</button><button id="deleteBtn" class="small">🗑 DELETE</button></div><div class="row"><button id="syncBtn" class="small">SYNC NOW</button></div></div>
-<details class="card"><summary><b>Settings</b></summary><p>Paste the DKB Capture backend Web App URL here once.</p><input id="backendUrl" type="url" placeholder="https://script.google.com/macros/s/.../exec"><div class="row"><button id="saveSettings" class="small">SAVE SETTINGS</button></div></details>
-<iframe id="syncFrame" name="syncFrame" class="hidden"></iframe><form id="syncForm" method="POST" target="syncFrame" class="hidden"><input type="hidden" name="payload" id="payloadField"></form>
-<script src="app.js"></script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#111111">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <title>DKB Capture</title>
+  <style>
+    :root{font-family:Arial,Helvetica,sans-serif;color:#111;background:#f4f4f4}
+    *{box-sizing:border-box}
+    body{margin:0;padding:18px;max-width:760px;margin-inline:auto;padding-bottom:40px}
+    h1{margin:0 0 4px;font-size:32px}.sub{margin-bottom:16px;color:#444}
+    #recordBtn{width:100%;min-height:160px;border:0;border-radius:24px;background:#111;color:#fff;font-size:34px;font-weight:800;box-shadow:0 4px 14px #0002}
+    #recordBtn.on{background:#d71920}
+    .card{background:#fff;border-radius:18px;padding:16px;margin-top:14px;box-shadow:0 2px 8px #0001}
+    .meter{height:30px;background:#ddd;border-radius:16px;overflow:hidden;margin:10px 0}
+    #meterFill{height:100%;width:0;background:#222;transition:width .08s linear}
+    #quality{font-size:30px;font-weight:800}
+    #status{font-size:18px;font-weight:700}
+    textarea{width:100%;min-height:100px;border:1px solid #bbb;border-radius:14px;padding:12px;font-size:18px;margin-top:10px}
+    #heard{background:#fafafa}
+    .row{display:flex;gap:10px;margin-top:12px}
+    button.small{flex:1;min-height:58px;border:0;border-radius:14px;font-size:20px;font-weight:800}
+    #replayBtn{background:#ddd}#deleteBtn{background:#eee}#syncBtn{background:#111;color:#fff}
+    .pill{display:inline-block;padding:7px 11px;border-radius:999px;background:#eee;font-weight:700;margin-top:8px}
+    .hidden{display:none}
+    details{margin-top:14px}
+    input[type=url]{width:100%;padding:12px;border:1px solid #bbb;border-radius:12px;font-size:15px}
+    .tiny{font-size:13px;color:#555}
+    audio{width:100%;margin-top:10px}
+  </style>
+</head>
+<body>
+  <h1>DKB Capture</h1>
+  <div class="sub">Tap once to record. Tap again to stop and save automatically.</div>
+
+  <button id="recordBtn">● RECORD</button>
+
+  <div class="card">
+    <div><b>Timer:</b> <span id="timer">00:00</span></div>
+    <div class="meter"><div id="meterFill"></div></div>
+    <div>Voice quality</div>
+    <div id="quality">READY</div>
+    <div id="qualityNote">Tap Record and speak normally.</div>
+    <div id="status" class="pill">READY</div>
+  </div>
+
+  <div class="card">
+    <div><b>HEARD</b> <span id="sttSupport" class="tiny"></span></div>
+    <textarea id="heard" placeholder="Your transcript will appear here when supported. You can correct it before or after recording."></textarea>
+    <div><b>Optional extra note</b></div>
+    <textarea id="note" placeholder="Add anything the recording may not explain."></textarea>
+  </div>
+
+  <div id="afterCard" class="card hidden">
+    <div><b>Latest capture</b></div>
+    <audio id="player" controls></audio>
+    <div class="row">
+      <button id="replayBtn" class="small">▶ REPLAY</button>
+      <button id="deleteBtn" class="small">🗑 DELETE</button>
+    </div>
+    <div class="row">
+      <button id="syncBtn" class="small">SYNC NOW</button>
+    </div>
+  </div>
+
+  <details class="card">
+    <summary><b>Settings</b></summary>
+    <p class="tiny">Backend Web App URL.</p>
+    <input id="backendUrl" type="url" placeholder="https://script.google.com/macros/s/.../exec">
+    <div class="row"><button id="saveSettings" class="small">SAVE SETTINGS</button></div>
+  </details>
+
+  <iframe id="syncFrame" name="syncFrame" class="hidden"></iframe>
+  <form id="syncForm" method="POST" target="syncFrame" class="hidden">
+    <input type="hidden" name="payload" id="payloadField">
+  </form>
+
+<script src="app.js"></script>
+</body>
+</html>
