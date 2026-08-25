@@ -1,11 +1,90 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#111"><link rel="manifest" href="manifest.webmanifest"><title>DKB Capture</title><style>
-body{font-family:Arial;margin:0;padding:16px;background:#f4f4f4;max-width:760px;margin:auto}.tabs{display:flex;gap:8px}.tab{flex:1;padding:14px;border:0;border-radius:12px;font-weight:700}.active{background:#111;color:#fff}.panel{display:none}.panel.on{display:block}#recordBtn{width:100%;min-height:150px;border:0;border-radius:22px;background:#111;color:white;font-size:32px;font-weight:800;margin-top:12px}#recordBtn.rec{background:#d71920}.card,.matter{background:#fff;border-radius:14px;padding:14px;margin-top:12px}.meter{height:26px;background:#ddd;border-radius:14px;overflow:hidden;margin:8px 0}#meterFill{height:100%;width:0;background:#222}#quality{font-size:28px;font-weight:800}.pill{display:inline-block;padding:7px 10px;border-radius:999px;background:#eee;font-weight:700}textarea,input{width:100%;box-sizing:border-box;padding:10px;margin-top:8px}.row{display:flex;gap:8px;margin-top:8px}.btn{flex:1;min-height:50px;border:0;border-radius:10px;font-weight:700}.hidden{display:none}.response{font-weight:700;margin-top:8px}
-</style></head><body>
-<h1>DKB Capture</h1><div class="tabs"><button id="captureTab" class="tab active">CAPTURE</button><button id="dayTab" class="tab">MY DAY</button></div>
-<section id="capturePanel" class="panel on"><button id="recordBtn">● RECORD</button>
-<div class="card"><b>Timer:</b> <span id="timer">00:00</span><div class="meter"><div id="meterFill"></div></div><div>Voice quality</div><div id="quality">READY</div><div id="qualityNote">Tap Record and speak normally.</div><div id="status" class="pill">READY</div></div>
-<div class="card"><b>Heard</b><div id="heard">—</div><textarea id="note" placeholder="Optional typed note or correction"></textarea></div>
-<div id="afterCard" class="card hidden"><audio id="player" controls style="width:100%"></audio><div class="row"><button id="replayBtn" class="btn">▶ REPLAY</button><button id="deleteBtn" class="btn">🗑 DELETE</button></div><div id="officeResponse" class="response"></div></div>
-<details class="card"><summary><b>Settings</b></summary><label>Capture Backend URL</label><input id="backendUrl"><label>TV1 Bridge URL</label><input id="tv1BridgeUrl"><div class="row"><button id="saveSettings" class="btn">SAVE SETTINGS</button></div></details></section>
-<section id="dayPanel" class="panel"><button id="refreshDay" class="btn">REFRESH MY DAY</button><div id="dayList"></div></section>
-<iframe id="syncFrame" name="syncFrame" class="hidden"></iframe><form id="syncForm" method="POST" target="syncFrame" class="hidden"><input type="hidden" id="payloadField" name="payload"></form><script src="app.js"></script></body></html>
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#111111">
+<link rel="manifest" href="manifest.webmanifest">
+<title>DKB Capture</title>
+<style>
+body{font-family:Arial;margin:0;padding:16px;background:#f4f4f4;max-width:760px;margin:auto;color:#111}
+.tabs{display:flex;gap:8px}.tab{flex:1;padding:14px;border:0;border-radius:12px;font-weight:700}.active{background:#111;color:#fff}
+.panel{display:none}.panel.on{display:block}
+#recordBtn{width:100%;min-height:150px;border:0;border-radius:22px;background:#111;color:#fff;font-size:32px;font-weight:800;margin-top:12px}
+#recordBtn.rec{background:#d71920}
+.card,.matter{background:#fff;border-radius:14px;padding:14px;margin-top:12px}
+.meter{height:26px;background:#ddd;border-radius:14px;overflow:hidden;margin:8px 0}#meterFill{height:100%;width:0;background:#222}
+#quality{font-size:28px;font-weight:800}.pill{display:inline-block;padding:7px 10px;border-radius:999px;background:#eee;font-weight:700}
+textarea,input{width:100%;box-sizing:border-box;padding:10px;margin-top:8px;font-size:16px}#heardEdit{min-height:120px;font-size:18px}
+.row{display:flex;gap:8px;margin-top:8px}.btn{flex:1;min-height:50px;border:0;border-radius:10px;font-weight:700}.primary{background:#111;color:#fff}
+.hidden{display:none}.response{font-weight:700;margin-top:8px}.err{background:#f8d7da}
+</style>
+</head>
+<body>
+<h1>DKB Capture</h1>
+<div class="tabs">
+<button id="captureTab" class="tab active">CAPTURE</button>
+<button id="dayTab" class="tab">MY DAY</button>
+</div>
+
+<section id="capturePanel" class="panel on">
+<button id="recordBtn">● RECORD</button>
+
+<div class="card">
+<b>Timer:</b> <span id="timer">00:00</span>
+<div class="meter"><div id="meterFill"></div></div>
+<div>Voice quality</div><div id="quality">READY</div>
+<div id="qualityNote">Tap Record and speak normally.</div>
+<div id="status" class="pill">READY</div>
+</div>
+
+<div id="reviewCard" class="card hidden">
+<b>Heard / Edit</b>
+<textarea id="heardEdit" placeholder="Your spoken words will appear here. Edit anything before saving."></textarea>
+<div style="font-size:13px;color:#555;margin-top:6px">Original audio stays unchanged. The edited wording is the instruction that will be saved.</div>
+<textarea id="note" placeholder="Optional extra note"></textarea>
+<div class="row">
+<button id="saveActionBtn" class="btn primary">SAVE / ACTION</button>
+<button id="discardBeforeSaveBtn" class="btn">DELETE</button>
+</div>
+</div>
+
+<div id="savingCard" class="card hidden">
+<div id="savingMessage" class="response">SAVING — DO NOT CLOSE YET</div>
+</div>
+
+<div id="afterCard" class="card hidden">
+<audio id="player" controls style="width:100%"></audio>
+<div id="officeResponse" class="response"></div>
+<div class="row"><button id="replayBtn" class="btn">▶ REPLAY</button></div>
+</div>
+
+<div id="failureCard" class="card hidden err">
+<div class="response">NOT CONFIRMED — recording is still safe on this device</div>
+<div class="row">
+<button id="retryBtn" class="btn primary">RETRY</button>
+<button id="editBtn" class="btn">EDIT</button>
+<button id="deletePendingBtn" class="btn">DELETE</button>
+</div>
+</div>
+
+<details class="card">
+<summary><b>Settings</b></summary>
+<label>Capture Backend URL</label><input id="backendUrl">
+<label>TV1 Bridge URL</label><input id="tv1BridgeUrl">
+<div class="row"><button id="saveSettings" class="btn">SAVE SETTINGS</button></div>
+</details>
+</section>
+
+<section id="dayPanel" class="panel">
+<button id="refreshDay" class="btn">REFRESH MY DAY</button>
+<div id="dayList"></div>
+</section>
+
+<iframe id="syncFrame" name="syncFrame" class="hidden"></iframe>
+<form id="syncForm" method="POST" target="syncFrame" class="hidden">
+<input type="hidden" id="payloadField" name="payload">
+</form>
+<script src="app.js"></script>
+</body>
+</html>
