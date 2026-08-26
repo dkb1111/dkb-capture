@@ -7,6 +7,7 @@ let selected=new Set();
 let openedMatter=null;
 let notesScroll=0;
 let addToMatterId='';
+let currentAudioObjectUrl='';
 
 const rec=$('recordBtn');
 const statusEl=$('status');
@@ -315,41 +316,85 @@ $('deleteMarked').onclick=()=>{
   renderNotes(notesCache);
 };
 
-async function openMatter(m){
+function b64ToObjectUrl(b64,mime){
+  const bin=atob(b64);
+  const bytes=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);
+  return URL.createObjectURL(new Blob([bytes],{type:mime||'audio/webm'}));
+}
+
+function loadAudioJsonp(audioId,onOk,onFail){
+  const backend=localStorage.getItem('dkb_backend_url')||'';
+  if(!backend||!audioId){onFail();return}
+
+  const cb='DKB_AUDIO_'+Date.now()+'_'+Math.floor(Math.random()*10000);
+  const s=document.createElement('script');
+  let done=false;
+  const cleanup=()=>{try{delete window[cb]}catch(e){};try{s.remove()}catch(e){}};
+
+  window[cb]=data=>{
+    done=true;
+    cleanup();
+    if(data?.ok&&data.b64)onOk(data);
+    else onFail();
+  };
+
+  const sep=backend.includes('?')?'&':'?';
+  s.src=backend+sep+'audioId='+encodeURIComponent(audioId)+'&callback='+encodeURIComponent(cb)+'&t='+Date.now();
+  s.async=true;
+  s.onerror=()=>{if(done)return;done=true;cleanup();onFail()};
+  document.body.appendChild(s);
+
+  setTimeout(()=>{
+    if(done)return;
+    done=true;
+    cleanup();
+    onFail();
+  },15000);
+}
+
+function openMatter(m){
   panel('open');
   $('openMeta').textContent='Voice note saved.'+(m.timeLabel?' · '+m.timeLabel:'');
   $('openText').textContent=(m.transcript||'').trim()||(m.hasAudio?'Audio available — no transcript':'No transcript available');
 
   const a=$('openAudio');
-  a.pause();a.removeAttribute('src');a.load();
+  try{a.pause()}catch(e){}
+
+  if(currentAudioObjectUrl){
+    try{URL.revokeObjectURL(currentAudioObjectUrl)}catch(e){}
+    currentAudioObjectUrl='';
+  }
+
+  a.removeAttribute('src');
+  a.load();
 
   if(m.audioId){
+    a.classList.add('hidden');
     $('openNoAudio').classList.remove('hidden');
     $('openNoAudio').textContent='Loading audio…';
-    a.classList.add('hidden');
 
-    try{
-      const backend=localStorage.getItem('dkb_backend_url')||'';
-      const sep=backend.includes('?')?'&':'?';
-      const r=await fetch(backend+sep+'audioId='+encodeURIComponent(m.audioId)+'&t='+Date.now());
-      const b64=(await r.text()).trim();
-
-      if(!b64)throw new Error('No audio returned');
-
-      const bin=atob(b64);
-      const bytes=new Uint8Array(bin.length);
-      for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);
-
-      const blob=new Blob([bytes],{type:'audio/webm'});
-      a.src=URL.createObjectURL(blob);
-      a.classList.remove('hidden');
-      $('openNoAudio').classList.add('hidden');
-
-    }catch(e){
-      a.classList.add('hidden');
-      $('openNoAudio').classList.remove('hidden');
-      $('openNoAudio').textContent='Audio could not load.';
-    }
+    loadAudioJsonp(
+      m.audioId,
+      data=>{
+        try{
+          currentAudioObjectUrl=b64ToObjectUrl(data.b64,data.mimeType);
+          a.src=currentAudioObjectUrl;
+          a.load();
+          a.classList.remove('hidden');
+          $('openNoAudio').classList.add('hidden');
+        }catch(e){
+          a.classList.add('hidden');
+          $('openNoAudio').classList.remove('hidden');
+          $('openNoAudio').textContent='Audio could not load.';
+        }
+      },
+      ()=>{
+        a.classList.add('hidden');
+        $('openNoAudio').classList.remove('hidden');
+        $('openNoAudio').textContent='Audio could not load.';
+      }
+    );
 
   }else{
     a.classList.add('hidden');
