@@ -1,14 +1,104 @@
 <!doctype html>
-<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#111111"><link rel="manifest" href="manifest.webmanifest"><title>DKB Capture</title>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#111111">
+<link rel="manifest" href="manifest.webmanifest">
+<title>DKB Capture</title>
 <style>
-body{font-family:Arial;margin:0;padding:16px;background:#f4f4f4;max-width:760px;margin:auto;color:#111}.tabs{display:flex;gap:8px}.tab{flex:1;padding:14px;border:0;border-radius:12px;font-weight:700}.active{background:#111;color:#fff}.panel{display:none}.panel.on{display:block}#recordBtn{width:100%;min-height:150px;border:0;border-radius:22px;background:#111;color:#fff;font-size:32px;font-weight:800;margin-top:12px}#recordBtn.rec{background:#d71920}.card,.matter{background:#fff;border-radius:14px;padding:14px;margin-top:12px}.meter{height:26px;background:#ddd;border-radius:14px;overflow:hidden;margin:8px 0}#meterFill{height:100%;width:0;background:#222}#quality{font-size:28px;font-weight:800}.pill{display:inline-block;padding:7px 10px;border-radius:999px;background:#eee;font-weight:700}textarea,input{width:100%;box-sizing:border-box;padding:10px;margin-top:8px;font-size:16px}.row{display:flex;gap:8px;margin-top:8px}.btn{flex:1;min-height:50px;border:0;border-radius:10px;font-weight:700}.primary{background:#111;color:#fff}.hidden{display:none}.response{font-weight:700;margin-top:8px}.small{font-size:13px;color:#555}#lockOverlay{position:fixed;inset:0;background:rgba(110,110,110,.88);display:none;z-index:9999;align-items:center;justify-content:center;padding:20px}#lockOverlay.on{display:flex}#lockBox{background:#fff;border-radius:18px;padding:24px;max-width:420px;width:100%;text-align:center}#lockTitle{font-size:28px;font-weight:800;margin-bottom:10px}#unlockBtn{width:100%;min-height:54px;border:0;border-radius:12px;font-weight:800;font-size:18px;margin-top:18px}
-</style></head><body>
-<h1>DKB Capture</h1><div class="tabs"><button id="captureTab" class="tab active">CAPTURE</button><button id="dayTab" class="tab">MY DAY</button></div>
-<section id="capturePanel" class="panel on"><button id="recordBtn">● RECORD</button>
-<div class="card"><b>Timer:</b> <span id="timer">00:00</span><div class="meter"><div id="meterFill"></div></div><div>Voice quality</div><div id="quality">READY</div><div id="qualityNote">Tap Record and speak normally.</div><div id="status" class="pill">READY</div></div>
-<div id="reviewCard" class="card hidden"><b>Transcript / Edit later</b><textarea id="heardEdit"></textarea><div class="small">This capture has already been saved or is saving. Edit the transcript and press UPDATE if you want to revise it later.</div><textarea id="note" placeholder="Optional extra note"></textarea><div class="row"><button id="updateBtn" class="btn primary">UPDATE</button><button id="deleteLocalBtn" class="btn">CLEAR SCREEN</button></div></div>
-<div id="afterCard" class="card hidden"><audio id="player" controls style="width:100%"></audio><div id="officeResponse" class="response"></div><div class="row"><button id="replayBtn" class="btn">▶ REPLAY</button></div></div>
-<details class="card"><summary><b>Settings</b></summary><label>Capture Backend URL</label><input id="backendUrl"><label>TV1 Bridge URL</label><input id="tv1BridgeUrl"><div class="row"><button id="saveSettings" class="btn">SAVE SETTINGS</button></div></details></section>
-<section id="dayPanel" class="panel"><button id="refreshDay" class="btn">REFRESH MY DAY</button><div id="dayList"></div></section>
-<div id="lockOverlay"><div id="lockBox"><div id="lockTitle">SAVING…</div><div id="lockText">Your capture is being stored. Please wait.</div><button id="unlockBtn">UNLOCK SCREEN</button><div class="small" style="margin-top:8px">Use only if this screen appears stuck. This does not cancel or reverse a save.</div></div></div>
-<iframe id="syncFrame" name="syncFrame" class="hidden"></iframe><form id="syncForm" method="POST" target="syncFrame" class="hidden"><input type="hidden" id="payloadField" name="payload"></form><script src="app.js"></script></body></html>
+body{font-family:Arial;margin:0;padding:16px;background:#f4f4f4;max-width:760px;margin:auto;color:#111}
+.tabs{display:flex;gap:8px}.tab{flex:1;padding:14px;border:0;border-radius:12px;font-weight:700;font-size:17px}.active{background:#111;color:#fff}
+.panel{display:none}.panel.on{display:block}
+#recordBtn{width:100%;min-height:150px;border:0;border-radius:22px;background:#111;color:#fff;font-size:32px;font-weight:800;margin-top:12px}
+#recordBtn.rec{background:#d71920}
+.card,.matter{background:#fff;border-radius:14px;padding:14px;margin-top:12px}
+.meter{height:26px;background:#ddd;border-radius:14px;overflow:hidden;margin:8px 0}#meterFill{height:100%;width:0;background:#222}
+#quality{font-size:28px;font-weight:800}.pill{display:inline-block;padding:7px 10px;border-radius:999px;background:#eee;font-weight:700}
+textarea,input{width:100%;box-sizing:border-box;padding:10px;margin-top:8px;font-size:16px}#heardEdit{min-height:120px;font-size:18px}
+.row{display:flex;gap:8px;margin-top:8px}.btn{flex:1;min-height:50px;border:0;border-radius:10px;font-weight:700;font-size:16px}.primary{background:#111;color:#fff}
+.hidden{display:none}.response{font-weight:700;margin-top:8px}.err{background:#f8d7da}
+.noteTop{display:flex;gap:12px;align-items:flex-start}.noteCheck{width:34px;height:34px;min-width:34px;margin-top:2px}
+.noteBody{flex:1;min-width:0}.noteTitle{font-size:18px;font-weight:700}.noteText{margin-top:6px;font-size:16px;white-space:pre-wrap;word-break:break-word}
+.noteStatus{font-size:13px;color:#555;margin-top:4px}.matter.selected{background:#fff1f1}
+.notesToolbar{position:sticky;top:0;z-index:5;background:#f4f4f4;padding:6px 0 2px}
+#archiveBar{background:#fff;border-radius:14px;padding:10px;margin-top:8px}#archiveSelectedBtn{background:#8b0000;color:#fff}
+</style>
+</head>
+<body>
+<h1>DKB Capture</h1>
+
+<div class="tabs">
+<button id="captureTab" class="tab active">CAPTURE</button>
+<button id="notesTab" class="tab">NOTES</button>
+</div>
+
+<section id="capturePanel" class="panel on">
+<button id="recordBtn">● RECORD</button>
+
+<div class="card">
+<b>Timer:</b> <span id="timer">00:00</span>
+<div class="meter"><div id="meterFill"></div></div>
+<div>Voice quality</div><div id="quality">READY</div>
+<div id="qualityNote">Tap Record and speak normally.</div>
+<div id="status" class="pill">READY</div>
+</div>
+
+<div id="reviewCard" class="card hidden">
+<b>Heard / Edit</b>
+<textarea id="heardEdit" placeholder="Your spoken words will appear here. Edit anything before saving."></textarea>
+<div style="font-size:13px;color:#555;margin-top:6px">Original audio stays unchanged. The edited wording is what will be saved.</div>
+<textarea id="note" placeholder="Optional extra note"></textarea>
+<div class="row">
+<button id="saveActionBtn" class="btn primary">SAVE / ACTION</button>
+<button id="discardBeforeSaveBtn" class="btn">DELETE</button>
+</div>
+</div>
+
+<div id="savingCard" class="card hidden"><div id="savingMessage" class="response">SAVING — DO NOT CLOSE YET</div></div>
+
+<div id="afterCard" class="card hidden">
+<audio id="player" controls style="width:100%"></audio>
+<div id="officeResponse" class="response"></div>
+<div class="row"><button id="replayBtn" class="btn">▶ REPLAY</button></div>
+</div>
+
+<div id="failureCard" class="card hidden err">
+<div class="response">NOT CONFIRMED — recording is still safe on this device</div>
+<div class="row">
+<button id="retryBtn" class="btn primary">RETRY</button>
+<button id="editBtn" class="btn">EDIT</button>
+<button id="deletePendingBtn" class="btn">DELETE</button>
+</div>
+</div>
+
+<details class="card">
+<summary><b>Settings</b></summary>
+<label>Capture Backend URL</label><input id="backendUrl">
+<label>TV1 Bridge URL</label><input id="tv1BridgeUrl">
+<div class="row"><button id="saveSettings" class="btn">SAVE SETTINGS</button></div>
+</details>
+</section>
+
+<section id="notesPanel" class="panel">
+<div class="notesToolbar">
+<div class="row"><button id="refreshNotes" class="btn">REFRESH NOTES</button></div>
+<div id="archiveBar" class="hidden">
+<b><span id="selectedCount">0</span> marked</b>
+<div class="row">
+<button id="archiveSelectedBtn" class="btn">DELETE MARKED</button>
+<button id="clearSelectionBtn" class="btn">CLEAR</button>
+</div>
+</div>
+</div>
+<div id="notesList"></div>
+</section>
+
+<iframe id="syncFrame" name="syncFrame" class="hidden"></iframe>
+<form id="syncForm" method="POST" target="syncFrame" class="hidden">
+<input type="hidden" id="payloadField" name="payload">
+</form>
+
+<script src="app.js"></script>
+</body>
+</html>
