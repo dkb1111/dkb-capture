@@ -1,3 +1,12 @@
+
+DKB_Capture_app_v0.3.9_FULL_REBUILT.txt
+
+Page
+1
+/
+1
+100%
+// DKB Capture app.js v0.3.9 — full replacement
 const $=id=>document.getElementById(id);
 
 let mr=null,stream=null,chunks=[],ctx=null,an=null,meter=null,clock=null,start=0,qs=[],speech=null,finalText='',interim='';
@@ -172,7 +181,7 @@ function confirmSaved(id,url,attempt){
 
   window[cb]=data=>{
     done=true;cleanup();
-    if(data?.found)finishSaveSuccess();
+    if(data?.found)finishSaveSuccess(data);
     else if(attempt<10)confirmTimer=setTimeout(()=>confirmSaved(id,url,attempt+1),900);
   };
 
@@ -183,8 +192,7 @@ function confirmSaved(id,url,attempt){
   document.body.appendChild(s);
 }
 
-function finishSaveSuccess(){
-  clearTimeout(confirmTimer);
+function finishReturnToFresh(){
   $('savingOverlay').classList.add('hidden');
   const wasAdd=!!addToMatterId;
   resetCaptureState();
@@ -192,6 +200,44 @@ function finishSaveSuccess(){
   panel('capture');
   statusEl.textContent='READY';
   if(wasAdd)notesCache=[];
+}
+
+function finishSaveSuccess(data){
+  clearTimeout(confirmTimer);
+
+  const actionResult=String(
+    data?.actionResult ||
+    data?.result ||
+    ''
+  ).trim().toUpperCase();
+
+  const msg=String(
+    data?.message ||
+    data?.msg ||
+    data?.actionMessage ||
+    'Saved'
+  ).trim();
+
+  const savingText=$('savingText');
+
+  if(actionResult==='ACTIONED'){
+    $('savingOverlay').style.background='#8fbe8f';
+    if(savingText)savingText.textContent='✓ '+msg;
+    setTimeout(()=>finishReturnToFresh(),3200);
+
+  }else if(actionResult==='FOUND'){
+    $('savingOverlay').style.background='#8fb5cf';
+    if(savingText)savingText.textContent=msg;
+    setTimeout(()=>finishReturnToFresh(),6500);
+
+  }else if(actionResult==='NEEDS_REVIEW'){
+    $('savingOverlay').style.background='#d8b56a';
+    if(savingText)savingText.textContent=msg;
+    setTimeout(()=>finishReturnToFresh(),6500);
+
+  }else{
+    finishReturnToFresh();
+  }
 }
 
 $('savingExit').onclick=()=>emergencyExit();
@@ -448,3 +494,4 @@ window.addEventListener('beforeunload',e=>{
 showFreshCapture();
 
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+Displaying DKB_Capture_app_v0.3.9_FULL_REBUILT.txt.
