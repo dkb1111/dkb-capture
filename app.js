@@ -1,11 +1,5 @@
 
 DKB_Capture_app_v0.3.9_FULL_REBUILT.txt
-
-Page
-1
-/
-1
-100%
 // DKB Capture app.js v0.3.9 — full replacement
 const $=id=>document.getElementById(id);
 
