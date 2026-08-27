@@ -1,4 +1,3 @@
-
 // DKB Capture app.js v0.3.9 — full replacement
 const $=id=>document.getElementById(id);
 
@@ -487,4 +486,4 @@ window.addEventListener('beforeunload',e=>{
 showFreshCapture();
 
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
-Displaying DKB_Capture_app_v0.3.9_FULL_REBUILT.txt.
+
