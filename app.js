@@ -204,6 +204,7 @@ function finishSaveSuccess(data){
   ).trim().toUpperCase();
 
   const msg=String(
+    data?.officeResponse ||
     data?.message ||
     data?.msg ||
     data?.actionMessage ||
@@ -486,4 +487,3 @@ window.addEventListener('beforeunload',e=>{
 showFreshCapture();
 
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
-
