@@ -1,4 +1,4 @@
-// DKB Capture app.js v0.3.9 — full replacement — overlay reset fix
+// DKB Capture app.js v0.4.1 — newest notes + visible results
 const $=id=>document.getElementById(id);
 
 let mr=null,stream=null,chunks=[],ctx=null,an=null,meter=null,clock=null,start=0,qs=[],speech=null,finalText='',interim='';
@@ -272,7 +272,15 @@ function loadNotes(){
   if(!url){list.innerHTML='<div class="card">Backend not set.</div>';return}
 
   jsonpList(url,data=>{
-    notesCache=(data?.matters||[]).filter(m=>!['archived','deleted','completed','done'].includes(String(m.status||'').toLowerCase()));
+    notesCache=(data?.matters||[])
+      .filter(m=>{
+        const status=String(m.status||'').toLowerCase();
+        const ar=String(m.actionResult||'').toUpperCase();
+        if(['archived','deleted'].includes(status))return false;
+        if(['completed','done'].includes(status)&&ar!=='ACTIONED')return false;
+        return true;
+      })
+      .sort((a,b)=>String(b.updatedAt||'').localeCompare(String(a.updatedAt||'')));
     renderNotes(notesCache);
   },()=>{
     list.innerHTML='<div class="card"><b>Notes did not load.</b><div class="row"><button id="retryLoad" class="btn">RETRY</button></div></div>';
@@ -310,14 +318,17 @@ function renderNotes(items){
 
     const text=(m.transcript||'').trim()||(m.hasAudio?'Audio available — no transcript':'No transcript available');
     const time=m.timeLabel||'';
+    const result=String(m.officeResponse||'').trim();
+    const showResult=result&&result.toLowerCase()!=='saved to notes.';
 
     d.innerHTML=
       '<div class="noteTop">'+
       '<input class="noteCheck" type="checkbox" aria-label="Mark note for delete">'+
       '<div class="noteBody">'+
-      '<div class="noteMeta">Voice note saved.'+(time?' · '+esc(time):'')+'</div>'+
-      '<div class="noteText">'+esc(text)+'</div>'+
-      '<div class="noteActions"><button class="btn openBtn">OPEN</button></div>'+
+      '<div class="noteMeta">Voice note saved.'+(time?' · '+esc(time):'')+'</div>'+ 
+      '<div class="noteText">'+esc(text)+'</div>'+ 
+      (showResult?'<div class="noteResult"><b>RESULT:</b> '+esc(result)+'</div>':'')+
+      '<div class="noteActions"><button class="btn openBtn">OPEN</button></div>'+ 
       '</div></div>';
 
     const chk=d.querySelector('.noteCheck');
@@ -400,7 +411,9 @@ function loadAudioJsonp(audioId,onOk,onFail){
 function openMatter(m){
   panel('open');
   $('openMeta').textContent='Voice note saved.'+(m.timeLabel?' · '+m.timeLabel:'');
-  $('openText').textContent=(m.transcript||'').trim()||(m.hasAudio?'Audio available — no transcript':'No transcript available');
+  const openTranscript=(m.transcript||'').trim()||(m.hasAudio?'Audio available — no transcript':'No transcript available');
+  const openResult=String(m.officeResponse||'').trim();
+  $('openText').textContent=openTranscript+(openResult&&openResult.toLowerCase()!=='saved to notes.'?'\n\nRESULT: '+openResult:'');
 
   const a=$('openAudio');
   try{a.pause()}catch(e){}
